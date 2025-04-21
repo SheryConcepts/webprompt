@@ -9,11 +9,16 @@ interface AppProps {
 
 export default function App({ onClose, onSelectCommand, rootRef }: AppProps) {
   return (
-    <CommandUI
-      // Pass the new handler function
-      onSelectCommand={onSelectCommand}
-      onClose={onClose}
-      rootRef={rootRef} // Pass the rootRef prop
-    />
+    <div
+      onClick={() => onClose()}
+      className="w-full h-full flex justify-center pt-28"
+    >
+      <CommandUI
+        // Pass the new handler function
+        onSelectCommand={onSelectCommand}
+        onClose={onClose}
+        rootRef={rootRef} // Pass the rootRef prop
+      />
+    </div>
   );
 }

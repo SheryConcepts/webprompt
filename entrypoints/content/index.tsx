@@ -98,7 +98,7 @@ async function toggleUI(ctx: ContentScriptContext) {
         root.render(
           <App
             // @ts-ignore
-            onClose={() => ui?.close()}
+            onClose={() => ui?.remove()}
             onSelectCommand={handleCommandSelection}
             rootRef={commandUIRef} // Pass the ref
           />,
@@ -107,11 +107,9 @@ async function toggleUI(ctx: ContentScriptContext) {
         isUIMounted = true; // Set mounted state AFTER successful render
 
         // Add the click outside listener ONLY when UI is mounted
-        document.addEventListener("mousedown", handleClickOutside);
       },
       onRemove: () => {
         console.log("UI onRemove triggered");
-        document.removeEventListener("mousedown", handleClickOutside); // Remove the listener
         root?.unmount();
         root = null;
         isUIMounted = false; // Update state on removal
@@ -184,18 +182,6 @@ function handleCommandSelection(commandId: string, args?: any[]) {
       );
       // TODO: Display error feedback
     });
-}
-
-function handleClickOutside(event: MouseEvent) {
-  if (
-    commandUIRef.current &&
-    !commandUIRef.current.contains(event.target as Node)
-  ) {
-    console.log("Click outside the UI detected.  Unmounting.");
-    if (ui) {
-      ui.remove(); // Remove the UI
-    }
-  }
 }
 
 console.log("Content script setup complete.");

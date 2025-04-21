@@ -80,6 +80,9 @@ export const CommandUI: React.FC<CommandUIProps> = ({
   return (
     // Container styling remains the same (Tailwind)
     <div
+      onClick={(event) => {
+        event?.stopPropagation();
+      }}
       className="w-[600px] absolute top-1/6 left-1/3 max-w-[90vw] bg-white border border-gray-300 rounded-lg shadow-lg flex flex-col overflow-hidden"
       ref={rootRef} // Attach the ref to the container
     >
