@@ -1,1 +1,5 @@
-@import "tailwind.css";
+@import "tailwindcss";
+
+webprompt-root {
+    z-index: 99999;
+}

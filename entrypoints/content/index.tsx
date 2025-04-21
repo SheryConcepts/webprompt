@@ -1,13 +1,16 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { CommandUI } from "@/components/CommandUI";
-import cssText from "@/assets/command-ui.css?inline";
+import App from "./App.tsx";
+import "~/assets/tailwind.css";
 // Import command registry functions
 import { getCommandById, Command } from "@/lib/commands";
+import { ContentScriptContext } from "#imports";
 
 let ui: ReturnType<typeof createShadowRootUi> | null = null;
 let root: ReactDOM.Root | null = null;
 let isUIMounted = false;
+let commandUIRef = React.createRef<HTMLDivElement>();
 
 export default defineContentScript({
   matches: ["<all_urls>"],
@@ -83,32 +86,32 @@ async function toggleUI(ctx: ContentScriptContext) {
   console.log("Mounting UI");
   if (!ui) {
     console.log("Creating ShadowRoot UI instance");
+    // @ts-ignore
     ui = await createShadowRootUi(ctx, {
       name: "webprompt-ui",
-      position: "overlay",
+      position: "modal",
       anchor: "body",
-      css: cssText,
+      zIndex: 99999,
       onMount: (container) => {
         console.log("UI onMount triggered");
-        container.classList.add("webprompt-root");
         root = ReactDOM.createRoot(container);
         root.render(
-          <React.StrictMode>
-            <CommandUI
-              // Pass the new handler function
-              onSelectCommand={handleCommandSelection}
-              onClose={() => {
-                console.log("Close requested from UI component");
-                ui?.remove(); // onRemove callback handles state and unmount
-              }}
-            />
-          </React.StrictMode>,
+          <App
+            // @ts-ignore
+            onClose={() => ui?.close()}
+            onSelectCommand={handleCommandSelection}
+            rootRef={commandUIRef} // Pass the ref
+          />,
         );
         console.log("React component rendered");
         isUIMounted = true; // Set mounted state AFTER successful render
+
+        // Add the click outside listener ONLY when UI is mounted
+        document.addEventListener("mousedown", handleClickOutside);
       },
       onRemove: () => {
         console.log("UI onRemove triggered");
+        document.removeEventListener("mousedown", handleClickOutside); // Remove the listener
         root?.unmount();
         root = null;
         isUIMounted = false; // Update state on removal
@@ -181,6 +184,18 @@ function handleCommandSelection(commandId: string, args?: any[]) {
       );
       // TODO: Display error feedback
     });
+}
+
+function handleClickOutside(event: MouseEvent) {
+  if (
+    commandUIRef.current &&
+    !commandUIRef.current.contains(event.target as Node)
+  ) {
+    console.log("Click outside the UI detected.  Unmounting.");
+    if (ui) {
+      ui.remove(); // Remove the UI
+    }
+  }
 }
 
 console.log("Content script setup complete.");

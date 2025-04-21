@@ -17,12 +17,12 @@ export default defineConfig({
     ],
     // Define the command shortcut
     commands: {
-      _execute_action: {
+      toggle_webprompt: {
         // Default command often used for browserAction/pageAction popups, repurpose if no popup needed initially
         suggested_key: {
           // Default keybindings - users can change these
-          default: "Ctrl+Shift+P",
-          mac: "Command+Shift+P",
+          default: "Ctrl+Shift+U",
+          mac: "Command+Shift+U",
         },
         description: "Open WebPrompt",
       },

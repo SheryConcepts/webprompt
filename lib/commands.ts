@@ -1,3 +1,7 @@
+// Uncomment if 'browser' is not recognized globally by TS despite WXT setup
+// import { browser } from 'wxt/browser';
+
+import type { Browser } from "wxt/browser";
 import type { ContentScriptContext } from "#imports"; // If needed for content commands
 
 /**
@@ -40,7 +44,7 @@ const commandsList: Command[] = [
     description: "Close the current tab",
     context: "background",
     // Note: Background executor needs to pass the 'tab' object from the sender
-    execute: async (tab?: browser.tabs.Tab) => {
+    execute: async (tab?: Browser.Tabs.Tab) => {
       if (tab?.id) {
         await browser.tabs.remove(tab.id);
         return "Tab closed.";

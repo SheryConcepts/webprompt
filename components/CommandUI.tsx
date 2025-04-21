@@ -6,11 +6,13 @@ interface CommandUIProps {
   // Change prop to just signal which command ID was selected
   onSelectCommand: (commandId: string, args?: any[]) => void;
   onClose: () => void;
+  rootRef: React.RefObject<HTMLDivElement>; // Add rootRef
 }
 
 export const CommandUI: React.FC<CommandUIProps> = ({
   onSelectCommand,
   onClose,
+  rootRef, // Receive rootRef
 }) => {
   const [inputValue, setInputValue] = useState("");
   const [filteredCommands, setFilteredCommands] =
@@ -77,7 +79,10 @@ export const CommandUI: React.FC<CommandUIProps> = ({
 
   return (
     // Container styling remains the same (Tailwind)
-    <div className="webprompt-root w-[600px] max-w-[90vw] bg-white border border-gray-300 rounded-lg shadow-lg flex flex-col overflow-hidden">
+    <div
+      className="w-[600px] absolute top-1/6 left-1/3 max-w-[90vw] bg-white border border-gray-300 rounded-lg shadow-lg flex flex-col overflow-hidden"
+      ref={rootRef} // Attach the ref to the container
+    >
       <input
         ref={inputRef}
         type="text"

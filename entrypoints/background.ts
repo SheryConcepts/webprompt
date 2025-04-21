@@ -6,10 +6,8 @@ export default defineBackground(() => {
   // Command listener (for keyboard shortcut) remains the same
   browser.commands.onCommand.addListener(async (commandName) => {
     console.log(`Command received: ${commandName}`);
-    if (
-      commandName === "_execute_action" ||
-      commandName === "toggle-webprompt"
-    ) {
+    if (commandName === "toggle_webprompt") {
+      console.log("shortcut pressed");
       const [currentTab] = await browser.tabs.query({
         active: true,
         currentWindow: true,

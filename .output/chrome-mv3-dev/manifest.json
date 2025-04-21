@@ -11,10 +11,10 @@
     "activeTab"
   ],
   "commands": {
-    "_execute_action": {
+    "toggle_webprompt": {
       "suggested_key": {
-        "default": "Ctrl+Shift+P",
-        "mac": "Command+Shift+P"
+        "default": "Ctrl+Shift+U",
+        "mac": "Command+Shift+U"
       },
       "description": "Open WebPrompt"
     },
@@ -32,7 +32,18 @@
     "service_worker": "background.js"
   },
   "host_permissions": [
+    "<all_urls>",
     "http://localhost:3000/*"
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "content-scripts/content.css"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
+    }
   ],
   "content_security_policy": {
     "extension_pages": "script-src 'self' 'wasm-unsafe-eval' http://localhost:3000; object-src 'self';",
