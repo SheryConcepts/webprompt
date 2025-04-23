@@ -4,10 +4,9 @@ import { CommandUI } from "@/components/CommandUI";
 interface AppProps {
   onClose: () => void;
   onSelectCommand: (command: string) => void;
-  rootRef: React.RefObject<HTMLDivElement>; // Add rootRef type
 }
 
-export default function App({ onClose, onSelectCommand, rootRef }: AppProps) {
+export default function App({ onClose, onSelectCommand }: AppProps) {
   return (
     <div
       onClick={() => onClose()}
@@ -17,7 +16,6 @@ export default function App({ onClose, onSelectCommand, rootRef }: AppProps) {
         // Pass the new handler function
         onSelectCommand={onSelectCommand}
         onClose={onClose}
-        rootRef={rootRef} // Pass the rootRef prop
       />
     </div>
   );

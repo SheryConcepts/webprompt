@@ -10,7 +10,6 @@ import { ContentScriptContext } from "#imports";
 let ui: ReturnType<typeof createShadowRootUi> | null = null;
 let root: ReactDOM.Root | null = null;
 let isUIMounted = false;
-let commandUIRef = React.createRef<HTMLDivElement>();
 
 export default defineContentScript({
   matches: ["<all_urls>"],
@@ -100,7 +99,6 @@ async function toggleUI(ctx: ContentScriptContext) {
             // @ts-ignore
             onClose={() => ui?.remove()}
             onSelectCommand={handleCommandSelection}
-            rootRef={commandUIRef} // Pass the ref
           />,
         );
         console.log("React component rendered");

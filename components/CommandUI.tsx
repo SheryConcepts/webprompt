@@ -1,17 +1,15 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { getAllCommands, searchCommands, Command } from "@/lib/commands";
-import { LuTerminal, LuChevronDown, LuChevronUp } from "react-icons/lu"; // Added LuChevronDown and LuChevronUp
+import { LuTerminal, LuChevronDown, LuChevronUp } from "react-icons/lu";
 
 interface CommandUIProps {
   onSelectCommand: (commandId: string, args?: any[]) => void;
   onClose: () => void;
-  rootRef: React.RefObject<HTMLDivElement>;
 }
 
 export const CommandUI: React.FC<CommandUIProps> = ({
   onSelectCommand,
   onClose,
-  rootRef,
 }) => {
   const [inputValue, setInputValue] = useState("");
   const [filteredCommands, setFilteredCommands] = useState<Command[]>([]);
@@ -26,12 +24,15 @@ export const CommandUI: React.FC<CommandUIProps> = ({
   }, []);
 
   useEffect(() => {
-    if (inputValue.length > 0) {
-      setFilteredCommands(searchCommands(inputValue));
-    } else {
-      setFilteredCommands([]);
-    }
-    setSelectedIndex(0);
+    (async () => {
+      if (inputValue.length > 0) {
+        console.log(await searchCommands(inputValue));
+        setFilteredCommands(await searchCommands(inputValue));
+      } else {
+        setFilteredCommands([]);
+      }
+      setSelectedIndex(0);
+    })();
   }, [inputValue]);
 
   useEffect(() => {
@@ -89,7 +90,6 @@ export const CommandUI: React.FC<CommandUIProps> = ({
     <div
       className="w-[600px] absolute top-10 left-1/3 max-w-[90vw] bg-gray-900 border border-gray-700 rounded-lg shadow-lg flex flex-col overflow-hidden font-mono"
       onClick={(e) => e.stopPropagation()}
-      ref={rootRef}
     >
       <div className="flex items-center space-x-2 px-3 py-2 border-b border-gray-700 relative">
         {" "}
@@ -126,7 +126,7 @@ export const CommandUI: React.FC<CommandUIProps> = ({
                   index === selectedIndex
                     ? "bg-gray-800"
                     : "hover:bg-gray-800/50"
-                } transition-colors duration-100`}
+                } transition-colors duration-100 ${index === filteredCommands.length - 1 ? "pb-10" : ""}`}
                 onClick={() => handleItemClick(index)}
                 onMouseEnter={() => setSelectedIndex(index)}
               >
