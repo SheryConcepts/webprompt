@@ -1,17 +1,21 @@
-import { getAllCommands, getCommandById } from "@/lib/commands";
-import { loadCommands } from "@/lib/commands";
+import type { Command } from "@/lib/commands"; // Import type if needed
+import type { Browser } from "wxt/browser";
 
 console.log("Background script loaded.");
 
-export default defineBackground(() => {
-  browser.runtime.onInstalled.addListener(() => {
+export default defineBackground(async () => {
+  browser.runtime.onInstalled.addListener(async (details) => {
     console.log("Extension installed or updated. Loading commands...");
-    loadCommands();
-    console.log(getAllCommands());
+    console.log("Commands loaded.");
+    // Example: Log a specific command after loading
+    // const exampleCmd = await getCommandById("cmd-new-tab");
+    // console.log("Example loaded command:", exampleCmd);
   });
 
-  console.log(getCommandById("9e8a309c-dba2-4116-a937-50af7716e1b3"));
-  // Command listener (for keyboard shortcut) remains the same
+  // If you need commands immediately on startup (not just install)
+  // loadCommands(); // Consider if needed outside onInstalled
+
+  // Keyboard shortcut listener
   browser.commands.onCommand.addListener(async (commandName) => {
     console.log(`Command received: ${commandName}`);
     if (commandName === "toggle_webprompt") {
@@ -24,16 +28,43 @@ export default defineBackground(() => {
       if (currentTab?.id) {
         console.log(`Sending toggle-ui message to tab ${currentTab.id}`);
         try {
+          // Check if content script is likely injected before sending
+          await browser.scripting.executeScript({
+            target: { tabId: currentTab.id },
+            func: () => !!(window as any).webPromptContentScriptLoaded, // Check for a flag set by content script
+          });
+
           await browser.tabs.sendMessage(currentTab.id, {
             action: "toggle-ui",
           });
           console.log(`Message sent successfully to tab ${currentTab.id}`);
         } catch (error) {
           console.error(
-            `Error sending message to tab ${currentTab.id}:`,
+            `Error checking/sending message to tab ${currentTab.id}:`,
             error,
           );
-          // TODO: Consider injecting content script if it doesn't exist
+          // Attempt to inject the content script if messaging failed
+          try {
+            console.log(
+              `Attempting to inject content script into tab ${currentTab.id}`,
+            );
+            await browser.scripting.executeScript({
+              target: { tabId: currentTab.id },
+              files: ["content-scripts/content.js"], // Make sure path is correct based on WXT output
+            });
+            // Try sending the message again after injection
+            await browser.tabs.sendMessage(currentTab.id, {
+              action: "toggle-ui",
+            });
+            console.log(
+              `Message sent successfully after injection to tab ${currentTab.id}`,
+            );
+          } catch (injectionError) {
+            console.error(
+              `Failed to inject content script or send message after injection:`,
+              injectionError,
+            );
+          }
         }
       } else {
         console.log("No active tab found or tab has no ID.");
@@ -41,7 +72,7 @@ export default defineBackground(() => {
     }
   });
 
-  // --- Command Orchestration ---
+  // Command Orchestration Listener
   browser.runtime.onMessage.addListener(
     async (message, sender, sendResponse) => {
       console.log(
@@ -53,8 +84,17 @@ export default defineBackground(() => {
 
       if (message.action === "execute-command") {
         const { commandId, args } = message.payload;
-        const command = await getCommandById(commandId);
-        console.log(command);
+        let command: Command | undefined;
+        try {
+          command = await getCommandById(commandId); // Use await
+        } catch (error) {
+          console.error(`Error retrieving command ${commandId}:`, error);
+          sendResponse({
+            success: false,
+            error: `Failed to retrieve command: ${error.message}`,
+          });
+          return false; // Stop processing
+        }
 
         if (!command) {
           console.error(`Command not found: ${commandId}`);
@@ -62,82 +102,68 @@ export default defineBackground(() => {
             success: false,
             error: `Command not found: ${commandId}`,
           });
-          return false; // Synchronous response
+          return false;
+        }
+
+        if (!command.isEnabled) {
+          console.log(`Command '${command.name}' (${commandId}) is disabled.`);
+          sendResponse({
+            success: false,
+            error: `Command '${command.name}' is disabled.`,
+          });
+          return false;
         }
 
         console.log(
           `Orchestrating command: ${command.name} (context: ${command.context})`,
         );
 
-        if (command.context === "background") {
-          // Execute directly in background
-          Promise.resolve() // Ensure async handling
-            .then(() => command.execute(sender.tab, ...(args || []))) // Pass tab context
-            .then((result) => {
-              console.log(
-                `Background command '${command.name}' executed successfully.`,
-              );
-              sendResponse({ success: true, result });
-            })
-            .catch((error) => {
-              console.error(
-                `Error executing background command '${command.name}':`,
-                error,
-              );
-              sendResponse({
-                success: false,
-                error: error?.message || String(error),
-              });
-            });
-          return true; // Indicates async response
-        } else if (command.context === "content") {
-          // Forward to the content script that sent the message
-          if (!sender.tab?.id) {
-            console.error(
-              "Cannot execute content script command: sender tab ID is missing.",
+        try {
+          if (command.context === "background") {
+            const result = await command.execute(sender.tab, ...(args || [])); // Pass tab context, use await
+            console.log(
+              `Background command '${command.name}' executed successfully.`,
             );
-            sendResponse({ success: false, error: "Missing sender tab ID." });
-            return false;
-          }
-          console.log(
-            `Forwarding command '${command.name}' to content script in tab ${sender.tab.id}`,
-          );
-          browser.tabs
-            .sendMessage(sender.tab.id, {
+            sendResponse({ success: true, result });
+          } else if (command.context === "content") {
+            if (!sender.tab?.id) {
+              throw new Error(
+                "Cannot execute content script command: sender tab ID is missing.",
+              );
+            }
+            console.log(
+              `Forwarding command '${command.name}' to content script in tab ${sender.tab.id}`,
+            );
+            const response = await browser.tabs.sendMessage(sender.tab.id, {
+              // Use await
               action: "run-content-command",
               payload: { commandId, args: args || [] },
-            })
-            .then((response) => {
-              console.log(
-                `Response from content script for '${command.name}':`,
-                response,
-              );
-              // Forward the content script's response back to the original UI caller
-              sendResponse(response);
-            })
-            .catch((error) => {
-              console.error(
-                `Error forwarding/receiving from content script for '${command.name}':`,
-                error,
-              );
-              sendResponse({
-                success: false,
-                error:
-                  error?.message || `Error communicating with content script.`,
-              });
             });
-          return true; // Indicates async response
-        } else {
-          console.error(`Unsupported command context: ${command.context}`);
+            console.log(
+              `Response from content script for '${command.name}':`,
+              response,
+            );
+            sendResponse(response); // Forward the response
+          } else {
+            throw new Error(`Unsupported command context: ${command.context}`);
+          }
+        } catch (error) {
+          console.error(
+            `Error during command orchestration/execution for '${command?.name || commandId}':`,
+            error,
+          );
           sendResponse({
             success: false,
-            error: `Unsupported command context: ${command.context}`,
+            error: error?.message || String(error),
           });
-          return false;
         }
+        // Indicate that the response might be sent asynchronously.
+        // While we use await above, returning true is still the safest practice
+        // for complex async message handlers in extensions.
+        return true;
       }
       // Handle other message types if needed
-      return false; // Indicate synchronous handling if no response needed or handled above
+      return false; // Indicate synchronous handling if message not handled
     },
   );
 });

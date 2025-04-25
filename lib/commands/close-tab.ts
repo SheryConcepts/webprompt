@@ -3,7 +3,7 @@ import type { Browser } from "wxt/browser";
 import { v4 } from "uuid";
 
 const closeTabCommand: Command = {
-  id: v4(),
+  id: "close-tab",
   name: "Close Tab",
   description: "Close the current tab",
   context: "background",
@@ -16,6 +16,8 @@ const closeTabCommand: Command = {
     throw new Error("Could not determine the active tab to close.");
   },
   meta: { type: "browser", category: "tabs" },
+  isEnabled: true,
+  isUserDefined: false,
 };
 
 export default closeTabCommand;

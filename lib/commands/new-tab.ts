@@ -3,7 +3,7 @@ import type { Browser } from "wxt/browser";
 import { Command } from "./index";
 
 const newTabCommand: Command = {
-  id: uuidv4(),
+  id: "new-tab",
   name: "New Tab",
   description: "Open a new browser tab",
   context: "background",
@@ -13,6 +13,8 @@ const newTabCommand: Command = {
   },
   // args: [{ name: 'url', type: 'string', description: '(Optional) URL to open' }]
   meta: { type: "browser", category: "tabs" },
+  isEnabled: true,
+  isUserDefined: false,
 };
 
 export default newTabCommand;
