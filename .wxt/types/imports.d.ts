@@ -3,6 +3,7 @@ export {}
 declare global {
   const CommandUI: typeof import('/home/shery/lab/browser_extensions/webprompt/components/CommandUI')['CommandUI']
   const ContentScriptContext: typeof import('wxt/utils/content-script-context')['ContentScriptContext']
+  const ErrorNotification: typeof import('/home/shery/lab/browser_extensions/webprompt/components/ErrorNotification')['default']
   const InvalidMatchPattern: typeof import('wxt/utils/match-patterns')['InvalidMatchPattern']
   const MatchPattern: typeof import('wxt/utils/match-patterns')['MatchPattern']
   const browser: typeof import('wxt/browser')['browser']

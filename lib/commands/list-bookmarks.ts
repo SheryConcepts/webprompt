@@ -1,19 +1,19 @@
-import { v4 as uuidv4 } from "uuid";
-import type { Browser } from "wxt/browser";
 import { Command } from "./index";
 
 const listBookmarksCommand: Command = {
-  id: uuidv4(), // Example - Implement actual logic later
+  id: "cmd-list-bookmarks",
   name: "List Bookmarks",
-  description: "Search and list bookmarks",
+  description: "Open the bookmarks section of the browser",
   context: "background",
-  execute: async (query?: string) => {
-    console.log("Listing bookmarks (implementation needed)... Query:", query);
-    // Placeholder: Replace with actual browser.bookmarks.search(...)
-    await new Promise((res) => setTimeout(res, 50)); // Simulate async work
-    return "Bookmark listing not yet implemented.";
+  execute: async () => {
+    await browser.windows.create({
+      url: "chrome://bookmarks/",
+      type: "popup",
+    });
   },
   meta: { type: "browser", category: "bookmarks" },
+  isEnabled: true,
+  isUserDefined: false,
 };
 
 export default listBookmarksCommand;

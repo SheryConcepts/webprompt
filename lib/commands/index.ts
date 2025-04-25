@@ -52,6 +52,8 @@ import goBackCommandDef from "./go-back";
 import goForwardCommandDef from "./go-forward";
 import copyTitleCommandDef from "./copy-title";
 import downloadMarkdownCommandDef from "./download-markdown";
+import closeTabsRight from "./close-tabs-rights";
+import toggleDarkModeCommand from "./toggle-dark-mode";
 
 // This map holds the *original, code-defined* source commands.
 const sourceCommandDefinitions: Readonly<
@@ -65,7 +67,8 @@ const sourceCommandDefinitions: Readonly<
   "cmd-go-forward": goForwardCommandDef,
   "cmd-copy-title": copyTitleCommandDef,
   "cmd-download-markdown": downloadMarkdownCommandDef,
-  // Add other source commands here with unique keys
+  "cmd-close-tabs-right": closeTabsRight,
+  // "cmd-toggle-dark-mode": toggleDarkModeCommand
 };
 
 // --- Helper Functions ---

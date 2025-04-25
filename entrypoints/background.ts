@@ -1,5 +1,5 @@
+import { getCommandById } from "@/lib/commands";
 import type { Command } from "@/lib/commands"; // Import type if needed
-import type { Browser } from "wxt/browser";
 
 console.log("Background script loaded.");
 
@@ -28,12 +28,6 @@ export default defineBackground(async () => {
       if (currentTab?.id) {
         console.log(`Sending toggle-ui message to tab ${currentTab.id}`);
         try {
-          // Check if content script is likely injected before sending
-          await browser.scripting.executeScript({
-            target: { tabId: currentTab.id },
-            func: () => !!(window as any).webPromptContentScriptLoaded, // Check for a flag set by content script
-          });
-
           await browser.tabs.sendMessage(currentTab.id, {
             action: "toggle-ui",
           });
@@ -43,28 +37,6 @@ export default defineBackground(async () => {
             `Error checking/sending message to tab ${currentTab.id}:`,
             error,
           );
-          // Attempt to inject the content script if messaging failed
-          try {
-            console.log(
-              `Attempting to inject content script into tab ${currentTab.id}`,
-            );
-            await browser.scripting.executeScript({
-              target: { tabId: currentTab.id },
-              files: ["content-scripts/content.js"], // Make sure path is correct based on WXT output
-            });
-            // Try sending the message again after injection
-            await browser.tabs.sendMessage(currentTab.id, {
-              action: "toggle-ui",
-            });
-            console.log(
-              `Message sent successfully after injection to tab ${currentTab.id}`,
-            );
-          } catch (injectionError) {
-            console.error(
-              `Failed to inject content script or send message after injection:`,
-              injectionError,
-            );
-          }
         }
       } else {
         console.log("No active tab found or tab has no ID.");
@@ -91,7 +63,7 @@ export default defineBackground(async () => {
           console.error(`Error retrieving command ${commandId}:`, error);
           sendResponse({
             success: false,
-            error: `Failed to retrieve command: ${error.message}`,
+            error: `Failed to retrieve command: ${String(error)}`,
           });
           return false; // Stop processing
         }
@@ -154,7 +126,7 @@ export default defineBackground(async () => {
           );
           sendResponse({
             success: false,
-            error: error?.message || String(error),
+            error: String(error),
           });
         }
         // Indicate that the response might be sent asynchronously.

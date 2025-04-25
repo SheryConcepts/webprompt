@@ -19,4 +19,5 @@ declare module '#imports' {
   export { useState, useCallback, useMemo, useEffect, useRef, useContext, useReducer } from 'react';
   export { fakeBrowser } from 'wxt/testing';
   export { CommandUI } from '../components/CommandUI';
+  export { default as ErrorNotification } from '../components/ErrorNotification';
 }

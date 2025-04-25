@@ -1,21 +1,21 @@
-import React from "react";
 import { CommandUI } from "@/components/CommandUI";
 
 interface AppProps {
   onClose: () => void;
   onSelectCommand: (command: string) => void;
+  error?: string;
 }
 
-export default function App({ onClose, onSelectCommand }: AppProps) {
+export default function App({ onClose, onSelectCommand, error }: AppProps) {
   return (
     <div
       onClick={() => onClose()}
       className="w-full h-full flex justify-center pt-28"
     >
-      <CommandUI
-        // Pass the new handler function
-        onSelectCommand={onSelectCommand}
+      <CommandUI 
+        onSelectCommand={onSelectCommand} 
         onClose={onClose}
+        error={error}
       />
     </div>
   );

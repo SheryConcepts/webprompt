@@ -1,15 +1,18 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { searchCommands, getAllCommands, Command } from "@/lib/commands"; // Add getAllCommands
 import { LuTerminal, LuChevronDown, LuChevronUp } from "react-icons/lu";
+import ErrorNotification from "./ErrorNotification";
 
 interface CommandUIProps {
   onSelectCommand: (commandId: string, args?: any[]) => void;
   onClose: () => void;
+  error?: string;
 }
 
 export const CommandUI: React.FC<CommandUIProps> = ({
   onSelectCommand,
   onClose,
+  error,
 }) => {
   const [inputValue, setInputValue] = useState("");
   const [filteredCommands, setFilteredCommands] = useState<Command[]>([]);
@@ -20,7 +23,6 @@ export const CommandUI: React.FC<CommandUIProps> = ({
   const [showScrollDown, setShowScrollDown] = useState(false);
   const [showScrollUp, setShowScrollUp] = useState(false);
 
-  // Fetch commands effect
   useEffect(() => {
     let isMounted = true;
     setIsLoading(true);
@@ -32,7 +34,6 @@ export const CommandUI: React.FC<CommandUIProps> = ({
             ? await searchCommands(inputValue)
             : await getAllCommands(); // Fetch all enabled if input is empty
 
-        console.log(commands, "commands");
         if (isMounted) {
           // Only show enabled commands in the list
           setFilteredCommands(commands.filter((cmd) => cmd.isEnabled));
@@ -57,7 +58,6 @@ export const CommandUI: React.FC<CommandUIProps> = ({
     inputRef.current?.focus();
   }, []);
 
-  // Scroll handling effect (no changes needed)
   useEffect(() => {
     if (listRef.current && filteredCommands.length > 0) {
       const list = listRef.current;
@@ -170,13 +170,14 @@ export const CommandUI: React.FC<CommandUIProps> = ({
 
       {/* Command List Area */}
       <div className="relative">
-        {" "}
         {/* Container for list and fade */}
         {isLoading ? (
-          <div className="px-4 py-3 text-gray-500">Loading commands...</div>
+          // <div className="px-4 py-3 text-gray-500">Loading commands...</div>
+          // Loading is making the UI janky
+          <div></div>
         ) : filteredCommands.length > 0 ? (
           <ul
-            className="list-none m-0 p-0 max-h-[400px] overflow-y-auto" // Changed overflow to auto
+            className="list-none m-0 p-0 max-h-[400px] overflow-y-hidden" // Changed overflow to auto
             ref={listRef}
           >
             {filteredCommands.map((cmd, index) => (
@@ -194,11 +195,6 @@ export const CommandUI: React.FC<CommandUIProps> = ({
                 <div className="flex flex-col">
                   <span className="font-medium text-gray-200 text-sm">
                     {cmd.name}
-                    {!cmd.isUserDefined && (
-                      <span className="text-xs text-blue-400 ml-2">
-                        (Built-in)
-                      </span>
-                    )}
                   </span>
                   <span className="text-xs text-gray-400 mt-0.5">
                     {/* Slightly darker description */}

@@ -1,8 +1,6 @@
-import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App.tsx";
 import "~/assets/tailwind.css";
-// Import command registry functions (only need getCommandById if executing here)
 import { getCommandById } from "@/lib/commands";
 import type { Command } from "@/lib/commands"; // Import type if needed
 import { ContentScriptContext } from "#imports";
@@ -10,9 +8,7 @@ import { ContentScriptContext } from "#imports";
 let ui: ReturnType<typeof createShadowRootUi> | null = null;
 let root: ReactDOM.Root | null = null;
 let isUIMounted = false;
-
-// Flag to indicate the script is loaded in this tab context
-(window as any).webPromptContentScriptLoaded = true;
+let command_exc_error = "";
 
 export default defineContentScript({
   matches: ["<all_urls>"],
@@ -92,6 +88,28 @@ export default defineContentScript({
         // return false; // Explicitly indicate no response if message is not handled
       },
     );
+
+    browser.runtime.onMessage.addListener((message) => {
+      if (message.action === "command-execution-error") {
+        console.log(message.error, "command_exc_error")
+        const warningContainer = document.createElement('div');
+        warningContainer.classList.add("z-100");
+        warningContainer.style.position = 'fixed';
+        warningContainer.style.top = '10px';
+        warningContainer.style.right = '10px';
+        warningContainer.style.background = 'yellow';
+        warningContainer.style.padding = '10px';
+        warningContainer.style.borderRadius = '5px';
+        const warningText = document.createTextNode(message.error);
+        warningContainer.appendChild(warningText);
+        document.body.appendChild(warningContainer);
+        console.log(warningContainer, "warningContainer")
+        setTimeout(() => {
+          warningContainer.remove();
+        }, 5000);
+      }
+    });
+
   },
 });
 
@@ -128,6 +146,7 @@ async function toggleUI(ctx: ContentScriptContext) {
             <App
               onClose={() => ui?.remove()}
               onSelectCommand={handleCommandSelection}
+              error={command_exc_error}
             />,
           );
           isUIMounted = true;
@@ -183,8 +202,6 @@ function handleClickOutside(event: MouseEvent) {
 
 // Sends the command execution request *only* to the background script
 function handleCommandSelection(commandId: string, args?: any[]) {
-  console.log(`Command selected in UI: ${commandId}, Args:`, args);
-
   // Close the UI immediately
   if (ui) {
     ui.remove();
@@ -199,7 +216,7 @@ function handleCommandSelection(commandId: string, args?: any[]) {
       action: "execute-command",
       payload: { commandId, args: args || [] },
     })
-    .then((response) => {
+    .then(async (response) => {
       console.log(
         `Final response received from background for ${commandId}:`,
         response,
@@ -210,6 +227,12 @@ function handleCommandSelection(commandId: string, args?: any[]) {
           response?.error,
         );
         // TODO: Notify user of error
+        const command = await getCommandById(commandId);
+        command_exc_error = `Error while executing the command ${command?.name || commandId}`
+        browser.runtime.sendMessage({
+          action: "command-execution-error",
+          error: command_exc_error
+        });
       } else {
         console.log(
           `Command ${commandId} executed successfully. Result:`,
@@ -223,7 +246,6 @@ function handleCommandSelection(commandId: string, args?: any[]) {
         `Error sending/receiving execute-command for ${commandId} to background:`,
         error,
       );
-      // TODO: Notify user of communication error
     });
 }
 

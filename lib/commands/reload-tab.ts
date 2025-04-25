@@ -3,7 +3,7 @@ import type { Browser } from "wxt/browser";
 import { Command } from "./index";
 
 const reloadTabCommand: Command = {
-  id: uuidv4(),
+  id: "cmd-reload-tab",
   name: "Reload Tab",
   description: "Reload the current tab",
   context: "background",
@@ -15,6 +15,8 @@ const reloadTabCommand: Command = {
     throw new Error("Could not determine the active tab to reload.");
   },
   meta: { type: "browser", category: "tabs" },
+  isEnabled: true,
+  isUserDefined: false,
 };
 
 export default reloadTabCommand;
